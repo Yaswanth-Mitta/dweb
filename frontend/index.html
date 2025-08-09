@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState } = React;
+
+      function App() {
+        const [url, setUrl] = useState("");
+        const [shortUrl, setShortUrl] = useState("");
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState("");
+
+        const apiBase = "http://localhost:8000"; // Adjust if running elsewhere
+
+        const handleSubmit = async (e) => {
+          e.preventDefault();
+          setShortUrl("");
+          setError("");
+          if (!url.trim()) return;
+          setLoading(true);
+          try {
+            const res = await fetch(`${apiBase}/api/shorten`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url })
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.detail || `Request failed with ${res.status}`);
+            }
+            const data = await res.json();
+            setShortUrl(data.short_url || `${apiBase}/${data.code}`);
+          } catch (err) {
+            setError(err.message || "Something went wrong");
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        return (
+          <div className="container">
+            <h1>URL Shortener</h1>
+            <form onSubmit={handleSubmit} className="form">
+              <input
+                type="url"
+                placeholder="Enter a long URL (https://...)"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+              />
+              <button type="submit" disabled={loading}>
+                {loading ? "Shortening..." : "Shorten"}
+              </button>
+            </form>
+
+            {error && <div className="error">{error}</div>}
+
+            {shortUrl && (
+              <div className="result">
+                <span>Your short URL:</span>
+                <a href={shortUrl} target="_blank" rel="noreferrer">{shortUrl}</a>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>

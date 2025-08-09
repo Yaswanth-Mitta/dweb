@@ -21,7 +21,7 @@
         const [loading, setLoading] = useState(false);
         const [error, setError] = useState("");
 
-        const apiBase = "http://localhost:8000"; // Adjust if running elsewhere
+        const apiBase = ""; // use same-origin; Nginx proxies /api to backend
 
         const handleSubmit = async (e) => {
           e.preventDefault();
@@ -40,7 +40,8 @@
               throw new Error(data.detail || `Request failed with ${res.status}`);
             }
             const data = await res.json();
-            setShortUrl(data.short_url || `${apiBase}/${data.code}`);
+            const origin = window.location.origin;
+            setShortUrl(`${origin}/${data.code}`);
           } catch (err) {
             setError(err.message || "Something went wrong");
           } finally {
